@@ -1,5 +1,5 @@
 import { showView } from './ui.js';
-import { answerIncomingCall, handleCallAccepted, handleCallEnded, handleCallFailed, handleCallHold, handleCallMuted, handleCallUnhold, handleCallUnmuted, handleIncomingCall, hangupActiveCall, rejectIncomingCall, startTimers, toggleHoldCall, toggleMuteCall } from './call-manager.js';
+import { answerIncomingCall, applyCallBehaviorSettings, handleCallAccepted, handleCallEnded, handleCallFailed, handleCallHold, handleCallMuted, handleCallUnhold, handleCallUnmuted, handleIncomingCall, hangupActiveCall, rejectIncomingCall, startTimers, toggleHoldCall, toggleMuteCall } from './call-manager.js';
 import { initDialpad } from './dialpad.js';
 import * as contactsModule from './contacts.js?v=20260617';
 import { renderLogs } from './call-logs.js';
@@ -25,6 +25,17 @@ function buildSipConfig(settings){
     autoAnswer: settings.autoAnswer,
     autoHoldOnSwitch: settings.autoHoldOnSwitch
   };
+}
+
+
+function sipConfigsMatch(firstConfig, secondConfig){
+  if (!firstConfig || !secondConfig) return false;
+
+  return firstConfig.websocketUrl === secondConfig.websocketUrl
+    && firstConfig.sipUri === secondConfig.sipUri
+    && firstConfig.password === secondConfig.password
+    && firstConfig.displayName === secondConfig.displayName
+    && firstConfig.extension === secondConfig.extension;
 }
 
 function updateHeaderFromSettings(settings){
@@ -86,6 +97,20 @@ function initPresenceSipControls(){
   });
 }
 
+function getSipHandlers(){
+  return {
+    onIncomingCall: handleIncomingCall,
+    onCallAccepted: handleCallAccepted,
+    onCallEnded: handleCallEnded,
+    onCallFailed: handleCallFailed,
+    muted: handleCallMuted,
+    unmuted: handleCallUnmuted,
+    hold: handleCallHold,
+    unhold: handleCallUnhold
+  };
+}
+
+
 async function boot(){
   initTheme();
   initNavigation();
@@ -100,7 +125,27 @@ async function boot(){
   const settings = getSettings();
   updateTodayDate();
   updateHeaderFromSettings(settings);
-  window.addEventListener('settings:changed', (event) => updateHeaderFromSettings(event.detail?.settings || getSettings()));
+  let activeSipConfig = buildSipConfig(settings);
+  let activeCompanyWebsite = settings.companyWebsite;
+  window.addEventListener('settings:changed', async (event) => {
+    const nextSettings = event.detail?.settings || getSettings();
+    updateHeaderFromSettings(nextSettings);
+    applyCallBehaviorSettings(nextSettings);
+
+    const nextSipConfig = buildSipConfig(nextSettings);
+    const sipConfigChanged = !sipConfigsMatch(activeSipConfig, nextSipConfig);
+    const companyWebsiteChanged = activeCompanyWebsite !== nextSettings.companyWebsite;
+    if (!sipConfigChanged && !companyWebsiteChanged) return;
+
+    activeSipConfig = nextSipConfig;
+    activeCompanyWebsite = nextSettings.companyWebsite;
+    if (blockSipForInvalidCompanyWebsite(nextSettings.companyWebsite, { message: 'SIP Failed. Browser not supported.' })) {
+      unregisterSip();
+      return;
+    }
+
+    await initSipClient(nextSipConfig, getSipHandlers());
+  });
   await initAudioDevices();
   initSoundManager();
 
@@ -112,16 +157,7 @@ async function boot(){
     return;
   }
 
-  await initSipClient(buildSipConfig(settings), {
-    onIncomingCall: handleIncomingCall,
-    onCallAccepted: handleCallAccepted,
-    onCallEnded: handleCallEnded,
-    onCallFailed: handleCallFailed,
-    muted: handleCallMuted,
-    unmuted: handleCallUnmuted,
-    hold: handleCallHold,
-    unhold: handleCallUnhold
-  });
+  await initSipClient(activeSipConfig, getSipHandlers());
 
   contactsModule.initContacts();
   renderLogs();
