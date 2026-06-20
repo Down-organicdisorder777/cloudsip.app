@@ -79,7 +79,7 @@ function collectSettings(){
 }
 
 function initSettingsAccordions(){
-  const key = 'cloudsip_phone_settings_open_section';
+  const key = 'teliops_phone_settings_open_section';
   const headers = document.querySelectorAll('[data-settings-accordion]');
   if (!headers.length) return;
 
@@ -116,8 +116,7 @@ function bindSettingsButtons(){
   getElement('saveSettings')?.addEventListener('click', () => {
     const settings = saveSettings(collectSettings());
     renderSettingsForm(settings);
-    showSuccess('Settings saved');
-    showWarning('SIP credentials apply after reconnect or reload if the phone is already running.');
+    showSuccess('Settings saved and applied');
   });
 
   getElement('resetSettings')?.addEventListener('click', () => {
